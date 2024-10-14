@@ -13,7 +13,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	if((fp = fopen(argv[1], "r")) == NULL){
-		fprintf(stderr, "Error Open File \n");
+		fprintf(stderr, "Error Open File\n");
 		exit(2);
 	}
 
