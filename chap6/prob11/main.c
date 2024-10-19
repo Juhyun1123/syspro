@@ -10,7 +10,7 @@
 
 char type(mode_t);
 char *perm(mode_t);
-void printStat(char*, char*, struct stat*);
+void printStat(char*, char*, struct stat*, char op);
 
 int main(int argc, char **argv){
 	DIR *dp;
@@ -18,11 +18,25 @@ int main(int argc, char **argv){
 	struct stat st;
 	struct dirent *d;
 	char path[BUFSIZ + 1];
+	char op = '\0';
 
 	if(argc == 1)
 		dir = ".";
-	else 
+	else if(argc == 2){
+		if(argv[1][0] == '-'){
+			dir = ".";
+			op = argv[1][1];
+		}
+		else{
+			dir = argv[1];
+		}	
+	}else if(argc == 3){
 		dir = argv[1];
+		op = argv[2][1];
+	}else{
+		perror("Command format error");
+		exit(1);
+	}
 
 	if((dp = opendir(dir)) == NULL)
 		perror(dir);
@@ -32,7 +46,7 @@ int main(int argc, char **argv){
 		if(lstat(path, &st) < 0)
 			perror(path);
 		else
-			printStat(path, d -> d_name, &st);
+			printStat(path, d -> d_name, &st, op);
 	}
 
 	closedir(dp);
@@ -72,14 +86,19 @@ char* perm(mode_t mode){
 	return(perms);
 }
 
-void printStat(char *pathname, char *file, struct stat *st){
+void printStat(char *pathname, char *file, struct stat *st, char op){
 	printf("%5ld ", st -> st_blocks);
+	if(op == 'i') printf("%ld ", st -> st_ino);
 	printf("%c%s ", type(st -> st_mode), perm(st -> st_mode));
 	printf("%3ld ", st -> st_nlink);
 	printf("%s %s ", getpwuid(st -> st_uid) -> pw_name, getgrgid(st -> st_gid) -> gr_name);
 	printf("%9ld ", st -> st_size);
 	printf("%.12s ", ctime(&st -> st_mtime) + 4);
-	printf("%s\n", file);
+	if(op == 'Q') printf("\"");
+	printf("%s", file);
+	if(op == 'Q') printf("\"\n");
+	else if(op == 'p' && type(st -> st_mode) == 'd') printf("/\n");
+	else printf("\n");
 }
 
 
